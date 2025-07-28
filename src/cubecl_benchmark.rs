@@ -11,6 +11,7 @@ pub struct ReductionBench<R: Runtime, F: Float + CubeElement> {
     pub _f: PhantomData<F>,
 }
 
+const LINE_SIZE: u32 = 4;
 impl<R: Runtime, F: Float + CubeElement> Benchmark for ReductionBench<R, F> {
     type Input = GpuTensor<R, F>;
     type Output = GpuTensor<R, F>;
@@ -47,9 +48,9 @@ impl<R: Runtime, F: Float + CubeElement> Benchmark for ReductionBench<R, F> {
 }
 
 #[cube(launch_unchecked)]
-fn reduce_matrix<F: Float>(input: &Tensor<F>, output: &mut Tensor<F>) {
-    let mut acc = F::new(0.0f32);
-    for i in 0..input.shape(1) {
+fn reduce_matrix<F: Float>(input: &Tensor<Line<F>>, output: &mut Tensor<Line<F>>) {
+    let mut acc = Line::new(F::new(0.0f32));
+    for i in 0..input.shape(1) / LINE_SIZE {
         acc += input[UNIT_POS_X * input.stride(0) + i];
     }
     output[UNIT_POS_X] = acc;
