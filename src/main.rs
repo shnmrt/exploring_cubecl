@@ -1,13 +1,14 @@
-
+mod gelu;
 mod cubecl_gputensor;
 mod cubecl_benchmark;
 mod cubecl_example;
 use std::marker::PhantomData;
 use cubecl_example::CpuTensor;
 use cubecl_gputensor::GpuTensor;
-
+use gelu::launch as gelu_launch;
 use cubecl_benchmark::{ReductionBench};
 use cubecl::{benchmark::{Benchmark, TimingMethod}, prelude::*};
+
 
 pub fn launch_bench<R:Runtime, F: Float + CubeElement>(device: &R::Device) {
     let client = R::client(&device);
@@ -85,5 +86,7 @@ fn launch_on_cpu() {
 fn main() {
     // launch_on_cpu();
     // launch_gpu::<cubecl::wgpu::WgpuRuntime, f32>(&Default::default());
-    launch_bench::<cubecl::wgpu::WgpuRuntime, f32>(&Default::default());   
+    // launch_bench::<cubecl::wgpu::WgpuRuntime, f32>(&Default::default());
+    gelu_launch::<cubecl::wgpu::WgpuRuntime>(&Default::default());
+    
 }
