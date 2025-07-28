@@ -30,16 +30,15 @@ impl<R: Runtime, F: Float + CubeElement> Benchmark for ReductionBench<R, F> {
 
     fn execute(&self, input: Self::Input) -> Result<GpuTensor<R, F>, String> {
         let output_shape: Vec<usize> = vec![self.input_shape[0]];
-        
         let output = GpuTensor::<R, F>::empty(output_shape, &self.client);
-        
+
         unsafe {
             reduce_matrix::launch_unchecked::<F, R>(
                 &self.client,
-                CubeCount::Static(1, 1, 1),
-                CubeDim::new(self.input_shape[0] as u32, 1, 1), // Add parallelization on the first dimension
-                input.into_tensor_arg(1),
-                output.into_tensor_arg(1),
+                CubeCount::Static(self.input_shape[0] as u32, 1, 1),
+                CubeDim::new(self.input_shape[1] as u32, 1, 1),
+                input.into_tensor_arg(LINE_SIZE as u8),
+                output.into_tensor_arg(LINE_SIZE as u8),
             );
         }
 
@@ -49,10 +48,9 @@ impl<R: Runtime, F: Float + CubeElement> Benchmark for ReductionBench<R, F> {
 
 #[cube(launch_unchecked)]
 fn reduce_matrix<F: Float>(input: &Tensor<Line<F>>, output: &mut Tensor<Line<F>>) {
-    let mut acc = Line::new(F::new(0.0f32));
-    for i in 0..input.shape(1) / LINE_SIZE {
-        acc += input[UNIT_POS_X * input.stride(0) + i];
+    let mut acc = Line::new(F::new(0.0f32)); // A [Line] is also necessary here
+    for i in 0..input.shape(2) / LINE_SIZE {
+        acc = acc + input[CUBE_POS_X * input.stride(0) + UNIT_POS_X * input.stride(1) + i];
     }
-    output[UNIT_POS_X] = acc;
-    
+    output[CUBE_POS_X * output.stride(0) + UNIT_POS_X] = acc;
 }

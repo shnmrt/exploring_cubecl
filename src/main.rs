@@ -1,3 +1,4 @@
+
 mod cubecl_gputensor;
 mod cubecl_benchmark;
 mod cubecl_example;
@@ -12,12 +13,12 @@ pub fn launch_bench<R:Runtime, F: Float + CubeElement>(device: &R::Device) {
     let client = R::client(&device);
 
     let bench1 = ReductionBench::<R,F> {
-        input_shape: vec![512, 8 * 1024],
+        input_shape: vec![64,256, 1024],
         client: client.clone(),
         _f: PhantomData
     };
     let bench2 = ReductionBench::<R,F> {
-        input_shape: vec![128, 32 * 1024],
+        input_shape: vec![64, 64, 4096],
         client: client.clone(),
         _f: PhantomData
     };
